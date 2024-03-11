@@ -1,0 +1,217 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model categoria {
+  idcat      Int          @id @default(autoincrement())
+  nombre     String?      @db.VarChar(50)
+  estado     Int?
+  medida     String?      @db.VarChar(50)
+  materiales materiales[]
+}
+
+model cliente {
+  idCli       Int      @id @default(autoincrement())
+  nombre      String?  @db.VarChar(70)
+  apellidos   String?  @db.VarChar(50)
+  email       String?  @db.VarChar(100)
+  direccion   String?  @db.VarChar(50)
+  telefono    String?  @db.VarChar(10)
+  tipoDoc     String?  @db.VarChar(50)
+  cedula      String?  @db.VarChar(10)
+  fecha_nac   String?  @db.VarChar(50)
+  estado      Int?
+  constrasena String?  @db.VarChar(200)
+  createdAt   DateTime @default(dbgenerated("(curdate())")) @db.Date
+  obras       obras[]
+}
+
+model compras {
+  idCom           Int               @id @default(autoincrement())
+  fecha           String?           @db.VarChar(50)
+  imagen          String?           @db.VarChar(100)
+  total_compra    Int?
+  codigoFactura   String?           @db.VarChar(20)
+  idProv          Int
+  proveedor       proveedor         @relation(fields: [idProv], references: [idProv], onUpdate: Restrict, map: "compras_ibfk_1")
+  compras_detalle compras_detalle[]
+
+  @@index([idProv], map: "idProv")
+}
+
+model compras_detalle {
+  id         Int         @id @default(autoincrement())
+  idCompra   Int
+  idMat      Int?
+  cantidad   Int?
+  precio     Int?
+  subtotal   Int?
+  compras    compras     @relation(fields: [idCompra], references: [idCom], onUpdate: Restrict, map: "compras_detalle_ibfk_1")
+  materiales materiales? @relation(fields: [idMat], references: [idMat], onDelete: Restrict, onUpdate: Restrict, map: "compras_detalle_ibfk_2")
+
+  @@index([idCompra], map: "idCompra")
+  @@index([idMat], map: "idMat")
+}
+
+model empleado {
+  idEmp                 Int                     @id @default(autoincrement())
+  nombre                String?                 @db.VarChar(50)
+  direccion             String?                 @db.VarChar(50)
+  estado                Int?
+  email                 String?                 @unique @db.VarChar(100)
+  telefono              String?                 @db.VarChar(10)
+  cedula                String?                 @db.VarChar(10)
+  tipoDoc               String?                 @db.VarChar(22)
+  apellidos             String?                 @db.VarChar(50)
+  contrasena            String?                 @db.VarChar(250)
+  createdAt             DateTime                @default(dbgenerated("(curdate())")) @db.Date
+  actividades_empleados actividades_empleados[]
+  empleado_especialidad empleado_especialidad[]
+  obras                 obras[]
+  rolpermisoempleado    rolpermisoempleado[]
+}
+
+model empleado_especialidad {
+  id           Int          @id @default(autoincrement())
+  idEmp        Int
+  idEsp        Int
+  empleado     empleado     @relation(fields: [idEmp], references: [idEmp], onUpdate: Restrict, map: "empleado_especialidad_ibfk_1")
+  especialidad especialidad @relation(fields: [idEsp], references: [id], onUpdate: Restrict, map: "empleado_especialidad_ibfk_2")
+
+  @@index([idEmp], map: "idEmp")
+  @@index([idEsp], map: "idEsp")
+}
+
+model especialidad {
+  id                    Int                     @id @default(autoincrement())
+  especialidad          String?                 @db.VarChar(30)
+  estado                Int?
+  empleado_especialidad empleado_especialidad[]
+}
+
+model materiales {
+  idMat                  Int                      @id @default(autoincrement())
+  nombre                 String?                  @db.VarChar(50)
+  estado                 Int?
+  idCategoria            Int?
+  cantidad               Float
+  actividades_materiales actividades_materiales[]
+  compras_detalle        compras_detalle[]
+  categoria              categoria?               @relation(fields: [idCategoria], references: [idcat], onDelete: Restrict, onUpdate: Restrict, map: "materiales_ibfk_2")
+
+  @@index([idCategoria], map: "idCategoria")
+}
+
+model obras {
+  idObra                 Int                      @id @default(autoincrement())
+  descripcion            String?                  @db.VarChar(100)
+  fechaini               String?                  @db.VarChar(50)
+  fechafin               String?                  @db.VarChar(50)
+  area                   String?                  @db.VarChar(50)
+  idCliente              Int?
+  estado                 String?                  @db.VarChar(50)
+  precio                 Int?
+  createdAt              DateTime                 @default(dbgenerated("(curdate())")) @db.Date
+  idEmp                  Int
+  actividades_empleados  actividades_empleados[]
+  actividades_materiales actividades_materiales[]
+  detalle_obra           detalle_obra[]
+  empleado               empleado                 @relation(fields: [idEmp], references: [idEmp], onUpdate: Restrict, map: "FK_idEmp")
+  cliente                cliente?                 @relation(fields: [idCliente], references: [idCli], onDelete: Restrict, onUpdate: Restrict, map: "obras_ibfk_3")
+
+  @@index([idCliente], map: "idCliente")
+  @@index([idEmp], map: "FK_idEmp")
+}
+
+model permiso {
+  idPer              Int                  @id @default(autoincrement())
+  permiso            String?              @db.VarChar(30)
+  estado             Int?
+  rolpermisoempleado rolpermisoempleado[]
+}
+
+model proveedor {
+  idProv           Int       @id @default(autoincrement())
+  nombre           String?   @db.VarChar(50)
+  direccion        String?   @db.VarChar(100)
+  nit              String?   @db.VarChar(14)
+  tipo             String?   @db.VarChar(10)
+  estado           Int?
+  email            String?   @db.VarChar(100)
+  telefono         String?   @db.VarChar(15)
+  nombreContacto   String?   @db.VarChar(50)
+  telefonoContacto String?   @db.VarChar(10)
+  emailContacto    String?   @db.VarChar(100)
+  compras          compras[]
+}
+
+model rol {
+  idRol              Int                  @id @default(autoincrement())
+  nombre             String?              @db.VarChar(30)
+  estado             Int?
+  rolpermisoempleado rolpermisoempleado[]
+}
+
+model detalle_obra {
+  id        Int     @id @default(autoincrement())
+  actividad String? @db.VarChar(60)
+  fechaini  String? @db.VarChar(50)
+  fechafin  Int?
+  estado    String? @db.VarChar(50)
+  idObra    Int
+  obras     obras   @relation(fields: [idObra], references: [idObra], onUpdate: Restrict, map: "detalle_obra_ibfk_1")
+
+  @@index([idObra], map: "idObra")
+}
+
+model rolpermisoempleado {
+  id       Int       @id @default(autoincrement())
+  idRol    Int
+  idPer    Int
+  idEmp    Int?
+  empleado empleado? @relation(fields: [idEmp], references: [idEmp], onDelete: Restrict, onUpdate: Restrict, map: "rolpermisoempleado_ibfk_1")
+  permiso  permiso   @relation(fields: [idPer], references: [idPer], onUpdate: Restrict, map: "rolpermisoempleado_ibfk_2")
+  rol      rol       @relation(fields: [idRol], references: [idRol], onUpdate: Restrict, map: "rolpermisoempleado_ibfk_3")
+
+  @@index([idEmp], map: "idEmp")
+  @@index([idPer], map: "idPer")
+  @@index([idRol], map: "idRol")
+}
+
+model codigos {
+  Id     Int     @id @default(autoincrement())
+  codigo String? @unique @db.VarChar(50)
+  email  String? @db.VarChar(255)
+  estado Int?
+  fecha  String? @db.VarChar(100)
+}
+
+model actividades_empleados {
+  id        Int      @id @default(autoincrement())
+  actividad String   @db.VarChar(22)
+  idEmp     Int
+  idObra    Int
+  empleado  empleado @relation(fields: [idEmp], references: [idEmp], onUpdate: Restrict, map: "actividades_empleados_ibfk_1")
+  obras     obras    @relation(fields: [idObra], references: [idObra], onUpdate: Restrict, map: "actividades_empleados_ibfk_2")
+
+  @@index([idEmp], map: "idEmp")
+  @@index([idObra], map: "idObra")
+}
+
+model actividades_materiales {
+  id         Int        @id @default(autoincrement())
+  actividad  String     @db.VarChar(22)
+  idMat      Int
+  cantidad   Int
+  idObra     Int
+  materiales materiales @relation(fields: [idMat], references: [idMat], onUpdate: Restrict, map: "actividades_materiales_ibfk_1")
+  obras      obras      @relation(fields: [idObra], references: [idObra], onUpdate: Restrict, map: "actividades_materiales_ibfk_2")
+
+  @@index([idMat], map: "idMat")
+  @@index([idObra], map: "idObra")
+}
